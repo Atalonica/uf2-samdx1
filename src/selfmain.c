@@ -2,7 +2,7 @@
 
 #include "sam.h"
 
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
 #define BOOTLOADER_K 8
 #elif defined(SAMD51)
 #define BOOTLOADER_K 16
@@ -13,14 +13,16 @@ extern const uint16_t bootloader_crcs[];
 
 uint8_t bootloader_page_buf[FLASH_ROW_SIZE];
 
-#if defined(SAMD21)
+#elif defined(SAML21)
+#define NVM_FUSE_ADDR ((uint32_t *)0x00804000)
+#elif defined(SAMD21)
 #define NVM_FUSE_ADDR ((uint32_t *)NVMCTRL_AUX0_ADDRESS)
 #elif defined(SAMD51)
 #define NVM_FUSE_ADDR ((uint32_t *)NVMCTRL_FUSES_BOOTPROT_ADDR)
 #endif
 
 static inline void nvmctrl_wait_ready(void) {
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
     while (NVMCTRL->INTFLAG.bit.READY == 0) { }
 #elif defined(SAMD51)
     while (NVMCTRL->STATUS.bit.READY == 0) { }
@@ -28,7 +30,7 @@ static inline void nvmctrl_wait_ready(void) {
 }
 
 static inline void nvmctrl_set_addr(const uint32_t *addr) {
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
     NVMCTRL->ADDR.reg = (uint32_t)addr / 2;
 #elif defined(SAMD51)
     NVMCTRL->ADDR.reg = (uint32_t)addr;
@@ -36,7 +38,7 @@ static inline void nvmctrl_set_addr(const uint32_t *addr) {
 }
 
 static inline void nvmctrl_exec_cmd(uint32_t cmd) {
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
     NVMCTRL->STATUS.reg |= NVMCTRL_STATUS_MASK;  // Clear error status bits.
     NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | cmd;
     nvmctrl_wait_ready();
@@ -47,7 +49,7 @@ static inline void nvmctrl_exec_cmd(uint32_t cmd) {
 }
 
 void set_fuses_and_bootprot(uint32_t new_bootprot) {
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
     uint32_t fuses[2];
 #elif defined(SAMD51)
     uint32_t fuses[128];    // 512 bytes (whole user page)
@@ -58,7 +60,7 @@ void set_fuses_and_bootprot(uint32_t new_bootprot) {
 
     // If it appears the fuses page was erased (all ones), replace fuses with reasonable values.
 
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
     bool repair_fuses = (fuses[0] == 0xffffffff ||
                          fuses[1] == 0xffffffff);
 #elif defined(SAMD51)
@@ -70,7 +72,7 @@ void set_fuses_and_bootprot(uint32_t new_bootprot) {
     if (repair_fuses) {
         // These canonical fuse values taken from working Adafruit boards.
         // BOOTPROT is set to nothing in these values.
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
         fuses[0] = 0xD8E0C7FF;
         fuses[1] = 0xFFFFFC5D;
 #elif defined(SAMD51)
@@ -98,7 +100,7 @@ void set_fuses_and_bootprot(uint32_t new_bootprot) {
 
     // Write the fuses.
 
-#if defined(SAMD21)
+#if defined(SAMD21) || defined(SAML21)
     NVMCTRL->CTRLB.reg = NVMCTRL->CTRLB.reg | NVMCTRL_CTRLB_CACHEDIS | NVMCTRL_CTRLB_MANW;
     nvmctrl_set_addr(NVM_FUSE_ADDR);  // Set address to auxiliary row (fuses).
     nvmctrl_exec_cmd(NVMCTRL_CTRLA_CMD_EAR);  // Erase auxiliary row.
@@ -144,7 +146,7 @@ int main(void) {
 
     logmsg("Before main loop");
 
-#ifdef SAMD21
+#if defined(SAMD21) || defined(SAML21)
     // Disable BOOTPROT while updating bootloader.
     set_fuses_and_bootprot(7); // 0k - See "Table 22-2 Boot Loader Size" in datasheet.
 #endif
@@ -162,7 +164,7 @@ int main(void) {
     NVMCTRL->CTRLA.bit.CACHEDIS1 = true;
 #endif
 
-#ifdef SAMD21
+#if defined(SAMD21) || defined(SAML21)
     const uint8_t *ptr = bootloader;
     for (uint32_t i = 0; i < BOOTLOADER_K; ++i) {
         int crc = 0;
@@ -201,7 +203,7 @@ int main(void) {
 
     LED_MSC_OFF();
 
-#ifdef SAMD21
+#if defined(SAMD21) || defined(SAML21)
     // Re-enable BOOTPROT
     set_fuses_and_bootprot(2); // 8k
 #endif
