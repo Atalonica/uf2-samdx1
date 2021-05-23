@@ -7,6 +7,10 @@
 // All entries are little endian.
 
 // if you increase that, you will also need to update the linker script file
+#ifdef SAML21
+#define APP_START_ADDRESS 0x00002000
+#define UF2_FAMILY 0x1851780a
+#endif
 #ifdef SAMD21
 #define APP_START_ADDRESS 0x00002000
 #define UF2_FAMILY 0x68ed2b88
