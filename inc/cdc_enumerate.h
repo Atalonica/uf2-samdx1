@@ -44,11 +44,11 @@
 
 #define MAX_EP 8
 
-#if (SAMD51)
+#if defined(SAMD51)
   #define NVM_USB_PAD_TRANSN_POS            32
   #define NVM_USB_PAD_TRANSP_POS            37
   #define NVM_USB_PAD_TRIM_POS              42
-#elif (SAML21)
+#elif defined(SAML21)
   #define NVM_USB_PAD_TRANSN_POS            13
   #define NVM_USB_PAD_TRANSP_POS            18
   #define NVM_USB_PAD_TRIM_POS              23
