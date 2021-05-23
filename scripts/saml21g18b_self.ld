@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief Linker script for running in internal FLASH on the SAML21G18A
+ * \brief Linker script for running in internal FLASH on the SAML21G18B
  *
  * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
  *
