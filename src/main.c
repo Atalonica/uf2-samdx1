@@ -80,7 +80,7 @@ extern int8_t led_tick_step;
 
 #if defined(SAMD21)
     #define RESET_CONTROLLER PM
-#elif defined(SAMD51)
+#elif defined(SAMD51) || defined(SAML21)
     #define RESET_CONTROLLER RSTC
 #endif
 
@@ -151,6 +151,8 @@ static void check_start_application(void) {
 extern char _etext;
 extern char _end;
 
+#define NVMCTRL_USR_ROW_ADDRESS  0x00804000
+
 /**
  *  \brief  SAM-BA Main loop.
  *  \return Unused (ANSI-C compatibility).
@@ -161,7 +163,34 @@ int main(void) {
         while (1) {
         }
 
-#if defined(SAMD21)
+#if defined(SAML21)
+    if (((uint32_t *)NVMCTRL_USR_ROW_ADDRESS)[0] == 0xffffffff) {
+        // Clear any error flags.
+        NVMCTRL->STATUS.reg |= NVMCTRL_STATUS_MASK;
+        // Turn off cache and put in manual mode.
+        NVMCTRL->CTRLB.reg = NVMCTRL->CTRLB.reg | NVMCTRL_CTRLB_CACHEDIS | NVMCTRL_CTRLB_MANW;
+        // Set address to write.
+        NVMCTRL->ADDR.reg = NVMCTRL_USR_ROW_ADDRESS / 2;
+        // Erase auxiliary row.
+        NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_EAR;
+	while (!(NVMCTRL->INTFLAG.bit.READY)) {}
+        // Clear page buffer.
+        NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_PBC;
+	while (!(NVMCTRL->INTFLAG.bit.READY)) {}
+        // Reasonable fuse values, including 8k BOOTPROT.
+        ((uint32_t *)NVMCTRL_AUX0_ADDRESS)[0] = 0xD8E0C7FA;
+        ((uint32_t *)NVMCTRL_AUX0_ADDRESS)[1] = 0xFFFFFC5D;
+        // Write the fuses
+	NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_WAP;
+	while (!(NVMCTRL->INTFLAG.bit.READY)) {}
+        resetIntoBootloader();
+    }
+
+    // Disable the watchdog, in case the application set it.
+    WDT->CTRLA.reg = 0;
+    while(WDT->SYNCBUSY.reg != 0) {}
+	
+#elif defined(SAMD21)
     // If fuses have been reset to all ones, the watchdog ALWAYS-ON is
     // set, so we can't turn off the watchdog.  Set the fuse to a
     // reasonable value and reset. This is a mini version of the fuse
