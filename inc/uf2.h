@@ -137,7 +137,7 @@
 
 #define USE_MONITOR (USE_CDC || USE_UART)
 
-#ifdef SAMD51
+#ifdef D51
 // 51 also runs at 48MHz in bootloader mode, but it's still faster
 #define TIMER_STEP 2000
 #else
@@ -240,6 +240,9 @@ void padded_memcpy(char *dst, const char *src, int len);
 // Unlike for ordinary applications, our link script doesn't place the stack at the bottom
 // of the RAM, but instead after all allocated BSS.
 // In other words, this word should survive reset.
+#ifdef SAML21
+#define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
+#endif
 #ifdef SAMD21
 #define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
 #endif
@@ -250,6 +253,9 @@ void padded_memcpy(char *dst, const char *src, int len);
 #define DBL_TAP_MAGIC_QUICK_BOOT 0xf02669ef
 
 #if USE_SINGLE_RESET
+#ifdef SAML21
+#define SINGLE_RESET() (*((uint32_t *)0x20B4) == 0x87eeb07c)
+#endif
 #ifdef SAMD21
 #define SINGLE_RESET() (*((uint32_t *)0x20B4) == 0x87eeb07c)
 #endif
@@ -337,6 +343,11 @@ void blink_n_forever(uint32_t pin, uint32_t n, uint32_t interval);
 #define CONCAT_0(a, b) CONCAT_1(a, b)
 #define STATIC_ASSERT(e) enum { CONCAT_0(_static_assert_, __LINE__) = 1 / ((e) ? 1 : 0) }
 
+#ifdef SAML21
+STATIC_ASSERT(FLASH_ROW_SIZE == FLASH_PAGE_SIZE * 4);
+STATIC_ASSERT(FLASH_ROW_SIZE == NVMCTRL_ROW_SIZE);
+STATIC_ASSERT(FLASH_NUM_ROWS * 4 == FLASH_NB_OF_PAGES);
+#endif
 #ifdef SAMD21
 STATIC_ASSERT(FLASH_ROW_SIZE == FLASH_PAGE_SIZE * 4);
 STATIC_ASSERT(FLASH_ROW_SIZE == NVMCTRL_ROW_SIZE);
