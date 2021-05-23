@@ -63,7 +63,7 @@ function main() {
 
     if (!pkgDir) fatal("cannot find Arduino packages directory")
 
-    let openocdPath = pkgDir + "tools/openocd/0.10.0-arduino1-static/"
+    let openocdPath = pkgDir + "tools/openocd/0.10.0-arduino7/"
     if (!fs.existsSync(openocdPath)) fatal("openocd not installed in Arduino")
 
     let openocdBin = openocdPath + "bin/openocd"
