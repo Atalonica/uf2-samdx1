@@ -56,6 +56,7 @@ uint8_t mode_of_transfer;
  * \brief Open the given USART
  */
 void usart_open() {
+    
     uint32_t port;
     uint8_t pin;
 
@@ -101,7 +102,19 @@ void usart_open() {
                                                                << (4 * (pin & 0x01u));
     }
 
-    #ifdef SAMD21
+  #ifdef SAML21
+    /* Enable clock for BOOT_USART_MODULE */
+    MCLK->APBCMASK.reg |= MCLK_APBCMASK_SERCOM0 | MCLK_APBCMASK_SERCOM1 | MCLK_APBCMASK_SERCOM2 | MCLK_APBCMASK_SERCOM3 | MCLK_APBCMASK_SERCOM4 ;
+    MCLK->APBDMASK.reg |= MCLK_APBDMASK_SERCOM5;
+
+    /* Set GCLK_GEN0 as source for GCLK_ID_SERCOMx_CORE */
+    GCLK->PCHCTRL[BOOT_USART_PER_CLOCK_INDEX].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 );
+    while ( (GCLK->PCHCTRL[BOOT_USART_PER_CLOCK_INDEX].reg & GCLK_PCHCTRL_CHEN) == 0 );
+    /* Baud rate 115200 - clock 48MHz -> BAUD value-63018 */
+    uart_basic_init(BOOT_USART_MODULE, 63018, BOOT_USART_PAD_SETTINGS);
+  #endif
+	
+  #ifdef SAMD21
     uint32_t inst = uart_get_sercom_index(BOOT_USART_MODULE);
     /* Enable clock for BOOT_USART_MODULE */
     PM->APBCMASK.reg |= (1u << (inst + PM_APBCMASK_SERCOM0_Pos));
@@ -117,18 +130,16 @@ void usart_open() {
     GCLK->CLKCTRL.reg = (clkctrl.reg | temp);
     /* Baud rate 115200 - clock 8MHz -> BAUD value-50436 */
     uart_basic_init(BOOT_USART_MODULE, 50436, BOOT_USART_PAD_SETTINGS);
-    #endif
+  #endif
 
-    #ifdef SAMD51
+  #ifdef SAMD51
     GCLK->PCHCTRL[BOOT_GCLK_ID_CORE].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
     GCLK->PCHCTRL[BOOT_GCLK_ID_SLOW].reg = GCLK_PCHCTRL_GEN_GCLK3_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
 
     MCLK->BOOT_USART_MASK.reg |= BOOT_USART_BUS_CLOCK_INDEX ;
     /* Baud rate 115200 - clock 48MHz -> BAUD value-63018 */
     uart_basic_init(BOOT_USART_MODULE, 63018, BOOT_USART_PAD_SETTINGS);
-    #endif
-
-
+  #endif
 
     // Initialize flag
     b_sharp_received = false;
