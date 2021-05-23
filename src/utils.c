@@ -10,7 +10,10 @@ void __attribute__ ((noinline)) delay(uint32_t ms) {
     // due to the interrupt overhead of the pulsing.
     // SAMD21 starts up at 1MHz by default.
 #ifdef SAMD21
-    uint32_t count = ms * (current_cpu_frequency_MHz) * (led_tick_on ? 149: 167);
+    uint32_t count = ms * (current_cpu_frequency_MHz) * (led_tick_on ? 149 : 167);
+#endif
+#ifdef SAMDL21
+    uint32_t count = ms * (current_cpu_frequency_MHz) * (led_tick_on ? 596 : 668);
 #endif
 #ifdef SAMD51
     // SAMD51 starts up at 48MHz by default, and we set the clock to
