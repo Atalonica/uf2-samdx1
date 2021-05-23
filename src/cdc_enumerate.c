@@ -380,7 +380,7 @@ static const char *string_descriptors[] = {0, VENDOR_NAME, PRODUCT_NAME, serial_
 
 static void load_serial_number(char serial_number[SERIAL_NUMBER_LENGTH]) {
     // These are locations that taken together make up a unique serial number.
-    #ifdef SAMD21
+    #if defined(SAMD21) || defined(SAML21)
     uint32_t* addresses[4] = {(uint32_t *) 0x0080A00C, (uint32_t *) 0x0080A040,
                               (uint32_t *) 0x0080A044, (uint32_t *) 0x0080A048};
     #endif
@@ -461,18 +461,25 @@ void AT91F_InitUSB(void) {
     uint32_t pad_transn, pad_transp, pad_trim;
 
     /* Enable USB clock */
-    #ifdef SAMD21
-    PM->APBBMASK.reg |= PM_APBBMASK_USB;
-    #define DM_PIN PIN_PA24G_USB_DM
-    #define DM_MUX MUX_PA24G_USB_DM
-    #define DP_PIN PIN_PA25G_USB_DP
-    #define DP_MUX MUX_PA25G_USB_DP
+    #if defined(SAML21)
+        MCLK->APBBMASK.reg |= MCLK_APBBMASK_USB;
+        #define DM_PIN PIN_PA24G_USB_DM
+        #define DM_MUX MUX_PA24G_USB_DM
+        #define DP_PIN PIN_PA25G_USB_DP
+        #define DP_MUX MUX_PA25G_USB_DP
+    #endif
+    #if defined(SAMD21)
+        PM->APBBMASK.reg |= PM_APBBMASK_USB;
+        #define DM_PIN PIN_PA24G_USB_DM
+        #define DM_MUX MUX_PA24G_USB_DM
+        #define DP_PIN PIN_PA25G_USB_DP
+        #define DP_MUX MUX_PA25G_USB_DP
     #endif
     #ifdef SAMD51
-    #define DM_PIN PIN_PA24H_USB_DM
-    #define DM_MUX MUX_PA24H_USB_DM
-    #define DP_PIN PIN_PA25H_USB_DP
-    #define DP_MUX MUX_PA25H_USB_DP
+        #define DM_PIN PIN_PA24H_USB_DM
+        #define DM_MUX MUX_PA24H_USB_DM
+        #define DP_PIN PIN_PA25H_USB_DP
+        #define DP_MUX MUX_PA25H_USB_DP
     #endif
 
     /* Set up the USB DP/DN pins */
@@ -483,6 +490,10 @@ void AT91F_InitUSB(void) {
     PORT->Group[0].PMUX[DP_PIN / 2].reg &= ~(0xF << (4 * (DP_PIN & 0x01u)));
     PORT->Group[0].PMUX[DP_PIN / 2].reg |= DP_MUX << (4 * (DP_PIN & 0x01u));
 
+    #ifdef SAML21
+    GCLK->PCHCTRL[0x04U].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 );
+    while ( (GCLK->PCHCTRL[0x04U].reg & GCLK_PCHCTRL_CHEN) == 0 );
+    #endif
     #ifdef SAMD21
     GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(6) | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_CLKEN;
     while (GCLK->STATUS.bit.SYNCBUSY) {}
@@ -491,7 +502,6 @@ void AT91F_InitUSB(void) {
     GCLK->PCHCTRL[USB_GCLK_ID].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
     MCLK->AHBMASK.bit.USB_ = true;
     MCLK->APBBMASK.bit.USB_ = true;
-
     while(GCLK->SYNCBUSY.bit.GENCTRL0) {}
     #endif
 
