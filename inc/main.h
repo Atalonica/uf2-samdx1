@@ -32,7 +32,7 @@
 
 #define CPU_FREQUENCY 48000000
 
-#if (SAML21)
+#if defined(SAML21)
 #define FLASH_WAIT_STATES 2
 #else
 #define FLASH_WAIT_STATES 1
@@ -41,7 +41,7 @@
 
 #ifndef BOOT_USART_MODULE
 
-  #if (SAML21)
+  #if defined(SAML21)
     #define BOOT_USART_MODULE       SERCOM0
     #define BOOT_USART_PAD_SETTINGS UART_RX_PAD3_TX_PAD2
     #define BOOT_USART_PAD3         PINMUX_PA11C_SERCOM0_PAD3
