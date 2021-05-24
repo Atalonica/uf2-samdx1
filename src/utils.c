@@ -12,7 +12,7 @@ void __attribute__ ((noinline)) delay(uint32_t ms) {
 #ifdef SAMD21
     uint32_t count = ms * (current_cpu_frequency_MHz) * (led_tick_on ? 149 : 167);
 #endif
-#ifdef SAMDL21
+#ifdef SAML21
     uint32_t count = ms * (current_cpu_frequency_MHz) * (led_tick_on ? 596 : 668);
 #endif
 #ifdef SAMD51
