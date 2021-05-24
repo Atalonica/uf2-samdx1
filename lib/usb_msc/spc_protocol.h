@@ -46,7 +46,7 @@
 #ifndef _SPC_PROTOCOL_H_
 #define _SPC_PROTOCOL_H_
 
-#include "lib/usb_msc/usb_includes.h"
+#include "usb_includes.h"
 
 /**
  * \ingroup usb_msc_protocol
