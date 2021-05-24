@@ -9,10 +9,10 @@ static void gclk_sync(void) {
     while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_MASK)
         ;
 }
-static void dfll_sync(void) {
-    while ((OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0)
-        ;
-}
+// static void dfll_sync(void) {
+//     while ((OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0)
+//         ;
+// }
 static void pll_sync(void) {
   while ( OSCCTRL->DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_MASK );
 }
@@ -44,7 +44,7 @@ void system_init(void) {
 
   while ( (OSCCTRL->DPLLSTATUS.reg & OSCCTRL_DPLLSTATUS_CLKRDY) != OSCCTRL_DPLLSTATUS_CLKRDY );
 
-  GCLK->GENCTRL[GENERIC_CLOCK_GENERATOR_MAIN].reg =
+  GCLK->GENCTRL[0].reg =
     ( GCLK_GENCTRL_DIV(2) | GCLK_GENCTRL_SRC_DPLL96M | GCLK_GENCTRL_IDC | GCLK_GENCTRL_GENEN );
   gclk_sync();
 
